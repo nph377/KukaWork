@@ -1,7 +1,7 @@
 import socket
 
 KUKA_HOST = '172.31.1.147'   # KUKA iiwa robot IP address
-KUKA_PORT = 30000           # KUKA listening port
+KUKA_PORT = 30007           # KUKA listening port
 
 try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as kuka_socket:
