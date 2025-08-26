@@ -1,0 +1,4 @@
+- fix kuka.py errors
+- kuka -> python function getCoords()
+- kuka move function use lin instead of linrel
+- rewrite main.py to test new functions
