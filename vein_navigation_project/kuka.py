@@ -1,49 +1,58 @@
+"""
+for use with python_control.java
+"""
+
 import socket
-from threading import Thread
 import time
-import datetime
-import numpy as np
-import os
-import csv
+import sys
 
 from config import KUKA_HOST, KUKA_PORT
 
+class KukaState:
+    IDLE = 0
 
 class Kuka:
-    def __init__(self, no_connect = False):
-        if no_connect:
-            return
-
+    def __init__(self):
         self.kuka_connected = False
-        self.kuka_state = "idle"
+        self.kuka_state = None
 
         self.connect()
         self.position = [0, 0, 0]
-
 
     def connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((KUKA_HOST, KUKA_PORT))
         print(f"Connected to KUKA robot at {KUKA_HOST}:{KUKA_PORT}")
         self.kuka_connected = True
-        self.kuka_state = "idle"
+        self.kuka_state = KukaState.IDLE
 
     def disconnect(self):
-        try:
-            self.socket.sendall("exit\n".encode())
-        except:
-            print("unable to send exit to kuka")
-        finally:
-            print("kuka disconnected")
-            self.kuka_connected = False
-            self.kuka_state = None
+        self.socket.sendall("exit\n".encode())
+        print("kuka disconnected")
+        self.kuka_connected = False
+        self.kuka_state = None
 
-    def string_command(self, cmd: str):
+    def send_command(self, cmd: str) -> str:
         self.socket.sendall((cmd + "\n").encode())
 
-    def string_response(self):
-        #TODO
-        return
+        response = None
+        response = self.socket.recv(4096)
+
+        return response
+    
+    def get_coordinates(self, print_log = False):
+        """
+        returns list: [x,y,z,a,b,c]
+        x,y,z are in mm
+        a,b,c are in radians
+        """
+        cmd = "send_coordinates"
+        if print_log:
+            cmd += " print_log"
+        coords = self.send_command(cmd)
+        coords = [float(v) for v in coords.strip().decode().split()]
+
+        return coords
 
     # def async_move(self, x: int, y: int, z: int, waiting_time=.5):
     #     cmd = f"move {x} {y} {z}"
@@ -53,9 +62,16 @@ class Kuka:
 
 
 if __name__ == "__main__":
+
     kuka = Kuka()
 
-    kuka.string_command("hi")
+    # cmd = "send_coordinates print_log"
+    # print(f"command: {cmd}")
+    # r = kuka.send_command(cmd)
+    # print(f"response: {r}, {sys.getsizeof(r)} bytes")
 
-    # kuka.async_move(0,0,1)
+    c = kuka.get_coordinates(True)
+    for v in c:
+        print(v)
+
     kuka.disconnect()
